@@ -11,7 +11,7 @@ function isDog(card) {
     return card instanceof Dog;
 }
 
-class Creature extends Card{
+class Creature extends Card {
     constructor(name, maxPower, image) {
         super(name, maxPower, image);
     }
@@ -75,15 +75,47 @@ class Trasher extends Dog {
     }
 }
 
+class Gatling extends Creature {
+    constructor() {
+        super('Гатлинг', 6);
+    }
+
+    attack(gameContext, continuation) {
+        const taskQueue = new TaskQueue();
+        const {oppositePlayer} = gameContext;
+
+        taskQueue.push(onDone => this.view.showAttack(onDone));
+
+        taskQueue.push(onDone => {
+            const oppositeCards = oppositePlayer.table;
+            const subTaskQueue = new TaskQueue();
+
+            oppositeCards.forEach(oppositeCard => {
+                if (oppositeCard) {
+                    subTaskQueue.push(onNextCardDone => {
+                        this.dealDamageToCreature(2, oppositeCard, gameContext, onNextCardDone);
+                    });
+                }
+            });
+
+            subTaskQueue.continueWith(onDone);
+        });
+
+        taskQueue.continueWith(continuation);
+    }
+}
+
 const seriffStartDeck = [
     new Duck(),
     new Duck(),
     new Duck(),
-    new Duck(),
+    new Gatling(),
 ];
 
 const banditStartDeck = [
     new Trasher(),
+    new Dog(),
+    new Dog(),
 ];
 
 const game = new Game(seriffStartDeck, banditStartDeck);
