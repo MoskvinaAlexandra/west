@@ -75,6 +75,74 @@ class Trasher extends Dog {
     }
 }
 
+class Lad extends Dog {
+    constructor() {
+        super('Браток', 2);
+    }
+
+    static getInGameCount() {
+        return this.inGameCount || 0;
+    }
+
+    static setInGameCount(value) {
+        this.inGameCount = value;
+    }
+
+    static getBonus() {
+        const count = this.getInGameCount();
+        return count * (count + 1) / 2;
+    }
+
+    doAfterComingIntoPlay(gameContext, continuation) {
+        const currentCount = Lad.getInGameCount();
+        Lad.setInGameCount(currentCount + 1);
+        console.log(`Братков в игре: ${Lad.getInGameCount()}, бонус: ${Lad.getBonus()}`);
+        super.doAfterComingIntoPlay(gameContext, continuation);
+    }
+
+    doBeforeRemoving(continuation) {
+        const currentCount = Lad.getInGameCount();
+        Lad.setInGameCount(Math.max(0, currentCount - 1));
+
+        console.log(`Братков в игре: ${Lad.getInGameCount()}, бонус: ${Lad.getBonus()}`);
+        super.doBeforeRemoving(continuation);
+    }
+
+    modifyDealedDamageToCreature(value, toCard, gameContext, continuation) {
+        this.view.signalAbility(() => {
+            const bonus = Lad.getBonus();
+            const newValue = value + bonus;
+            console.log(`${this.name} наносит урон ${newValue} (${value} + ${bonus} бонус)`);
+            super.modifyDealedDamageToCreature(newValue, toCard, gameContext, continuation);
+        });
+    }
+
+    modifyTakenDamage(value, fromCard, gameContext, continuation) {
+        this.view.signalAbility(() => {
+            const bonus = Lad.getBonus();
+            const newValue = Math.max(0, value - bonus);
+            console.log(`${this.name} получает урон ${newValue} (${value} - ${bonus} защита)`);
+            super.modifyTakenDamage(newValue, fromCard, gameContext, continuation);
+        });
+    }
+
+    getDescriptions() {
+        const descriptions = super.getDescriptions();
+
+        const hasDealDamageOverride = Lad.prototype.hasOwnProperty('modifyDealedDamageToCreature');
+        const hasTakenDamageOverride = Lad.prototype.hasOwnProperty('modifyTakenDamage');
+
+        if (hasDealDamageOverride || hasTakenDamageOverride) {
+            return [
+                'Чем их больше, тем они сильнее',
+                ...descriptions
+            ];
+        }
+
+        return descriptions;
+    }
+}
+
 const seriffStartDeck = [
     new Duck(),
     new Duck(),
