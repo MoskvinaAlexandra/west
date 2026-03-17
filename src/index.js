@@ -11,6 +11,18 @@ function isDog(card) {
     return card instanceof Dog;
 }
 
+class Creature extends Card{
+    constructor(name, maxPower, image) {
+        super(name, maxPower, image);
+    }
+
+    getDescriptions() {
+        const creatureDesc = getCreatureDescription(this);
+        const baseDescriptions = super.getDescriptions();
+        return [creatureDesc, ...baseDescriptions];
+    }
+}
+
 function getCreatureDescription(card) {
     if (isDuck(card) && isDog(card)) {
         return 'Утка-Собака';
@@ -24,7 +36,7 @@ function getCreatureDescription(card) {
     return 'Существо';
 }
 
-class Duck extends Card {
+class Duck extends Creature {
     constructor(name = 'Мирная утка', power = 2) {
         super(name, power);
     }
@@ -38,7 +50,7 @@ class Duck extends Card {
     }
 }
 
-class Dog extends Card {
+class Dog extends Creature {
     constructor(name = 'Пес-бандит', power = 3) {
         super(name, power);
     }
