@@ -12,14 +12,19 @@ function isDog(card) {
 }
 
 class Creature extends Card {
-    constructor(name, maxPower, image) {
-        super(name, maxPower, image);
+    get currentPower() {
+        return this._currentPower;
+    }
+
+    set currentPower(value) {
+        this._currentPower = Math.min(value, this.maxPower);
     }
 
     getDescriptions() {
-        const creatureDesc = getCreatureDescription(this);
-        const baseDescriptions = super.getDescriptions();
-        return [creatureDesc, ...baseDescriptions];
+        return [
+            getCreatureDescription(this),
+            ...super.getDescriptions()
+        ];
     }
 }
 
@@ -53,6 +58,29 @@ class Duck extends Creature {
 class Dog extends Creature {
     constructor(name = 'Пес-бандит', power = 3) {
         super(name, power);
+    }
+}
+
+class Brewer extends Duck {
+    constructor() {
+        super('Пивовар', 2);
+    }
+
+    doBeforeAttack(gameContext, continuation) {
+        const {currentPlayer, oppositePlayer} = gameContext;
+        const allCards = currentPlayer.table.concat(oppositePlayer.table);
+
+        allCards.forEach(card => {
+            if (isDuck(card)) {
+                card.maxPower += 1;
+                card.currentPower += 2;
+                card.view.signalHeal(() => {
+                    card.updateView();
+                });
+            }
+        });
+
+        continuation();
     }
 }
 
@@ -205,14 +233,13 @@ class Rogue extends Creature {
 
 const seriffStartDeck = [
     new Duck(),
-    new Duck(),
-    new Duck(),
-    new Rogue(),
+    new Brewer(),
 ];
 const banditStartDeck = [
-    new Lad(),
-    new Lad(),
-    new Lad(),
+    new Dog(),
+    new Dog(),
+    new Dog(),
+    new Dog(),
 ];
 
 const game = new Game(seriffStartDeck, banditStartDeck);
